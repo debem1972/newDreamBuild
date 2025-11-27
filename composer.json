@@ -1,0 +1,14 @@
+{
+    "name": "dreambuild/gerenciador-horas",
+    "description": "Sistema de gerenciamento de horas de trabalho com relatórios em PDF",
+    "type": "project",
+    "require": {
+        "php": ">=7.4",
+        "tecnickcom/tcpdf": "^6.4"
+    },
+    "autoload": {
+        "psr-4": {
+            "DreamBuild\\": "app/"
+        }
+    }
+}

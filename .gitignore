@@ -1,0 +1,18 @@
+# ============================================
+# GITIGNORE - Arquivos que NÃO devem ir para o GitHub
+# ============================================
+
+# Configurações sensíveis
+database.php
+
+
+# Dependências
+vendor/
+composer.lock
+
+
+# Arquivos de teste
+teste_db.php
+
+#Arquivo de backups
+dashboardBK.php
