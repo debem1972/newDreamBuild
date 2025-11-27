@@ -15,4 +15,4 @@ composer.lock
 teste_db.php
 
 #Arquivo de backups
-dashboardBK.php
+backup/
