@@ -1,4 +1,8 @@
 <?php
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
+
 session_start();
 
 // Validar sessão
@@ -118,10 +122,11 @@ $params[] = $data_inicio;
 $sql .= " ORDER BY data DESC, entrada DESC";
 
 // Contar total de registros
+// Contar total de registros
 $stmt_count = $pdo->prepare($sql);
 $stmt_count->execute($params);
 $total_registros = $stmt_count->rowCount();
-$total_paginas = ceil($total_registros / $itens_por_pagina);
+$total_paginas = ($total_registros > 0) ? ceil($total_registros / $itens_por_pagina) : 1;
 
 // Validar página
 if ($pagina_atual > $total_paginas && $total_paginas > 0) {
@@ -130,14 +135,13 @@ if ($pagina_atual > $total_paginas && $total_paginas > 0) {
 
 // Calcular offset
 $offset = ($pagina_atual - 1) * $itens_por_pagina;
+if ($offset < 0) $offset = 0;
 
-// Obter registros da página
-$sql .= " LIMIT ? OFFSET ?";
-$params[] = $itens_por_pagina;
-$params[] = $offset;
+// Obter registros da página - USANDO INTVAL para forçar tipo inteiro
+$sql .= " LIMIT " . intval($itens_por_pagina) . " OFFSET " . intval($offset);
 
 $stmt = $pdo->prepare($sql);
-$stmt->execute($params);
+$stmt->execute($params); // NÃO inclua $itens_por_pagina e $offset aqui
 $lancamentos = $stmt->fetchAll();
 
 // Obter todos os lançamentos para cálculos de totais
