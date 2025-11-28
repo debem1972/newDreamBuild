@@ -228,11 +228,13 @@ $tipos_servico = obterTiposServico();
 
         .grid-container {
             display: grid;
-            grid-template-columns: 1fr 1fr;
+            /*modificado*/
+            grid-template-columns: 1fr 1fr 1fr;
             grid-template-rows: 1fr 1fr;
             gap: 15px;
             flex: 0 0 auto;
-            height: calc(60vh - 40px);
+            /*modificado*/
+            height: 50vh;
             min-height: 500px;
         }
 
@@ -246,6 +248,32 @@ $tipos_servico = obterTiposServico();
             flex-direction: column;
         }
 
+        /*inserido*/
+        /* Novo Lançamento (1) - 1ª coluna, ocupa 2 linhas */
+        .grid-item:nth-child(1) {
+            grid-column: 1;
+            grid-row: 1 / 3;
+        }
+
+
+        /* Filtros (2) - 2ª coluna, ocupa 2 linhas */
+        .grid-item:nth-child(3) {
+            grid-column: 2;
+            grid-row: 1 / 3;
+        }
+
+        /* Análise de Horas (3) - 3ª coluna, 1ª linha */
+        .grid-item:nth-child(2) {
+            grid-column: 3;
+            grid-row: 1;
+        }
+
+        /* Monitor (4) - 3ª coluna, 2ª linha */
+        .grid-item:nth-child(4) {
+            grid-column: 3;
+            grid-row: 2;
+        }
+
         .grid-item h3 {
             color: #333;
             font-weight: 600;
@@ -257,9 +285,33 @@ $tipos_servico = obterTiposServico();
             flex-shrink: 0;
         }
 
-        .grid-item h3 i {
-            color: #667eea;
+        /* ADICIONAR ESTE NOVO ESTILO: */
+        .btn-pdf-inline {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            /*color: #ffff;*/
+            padding: 6px 12px;
+            border: none;
+            border-radius: 5px;
+            /*font-weight: 600;*/
+            cursor: pointer;
+            transition: transform 0.2s;
+            font-size: 0.75rem;
+            margin-left: auto;
+            display: flex;
+            align-items: center;
+            gap: 5px;
         }
+
+        .grid-item h3 i {
+            color: #ffff;
+        }
+
+        .btn-pdf-inline:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+        }
+
+
 
         /* FORMULÁRIO DE LANÇAMENTO */
         .form-compact {
@@ -364,27 +416,28 @@ $tipos_servico = obterTiposServico();
         .stats-grid-compact {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 12px;
+            gap: 10px;
             flex: 1;
+            align-content: start;
         }
 
         .stat-card-compact {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
-            padding: 15px;
+            padding: 12px;
             border-radius: 8px;
             text-align: center;
         }
 
         .stat-card-compact h4 {
-            font-size: 0.85rem;
+            font-size: 0.7rem;
             font-weight: 500;
-            margin-bottom: 8px;
+            margin-bottom: 6px;
             opacity: 0.9;
         }
 
         .stat-card-compact .value {
-            font-size: 1.5rem;
+            font-size: 1.2rem;
             font-weight: 700;
         }
 
@@ -397,6 +450,8 @@ $tipos_servico = obterTiposServico();
             flex: 1;
             overflow-y: auto;
             min-height: 0;
+            /*inserido*/
+            max-height: calc(50vh - 30px);
         }
 
         .table-container h3 {
@@ -748,9 +803,15 @@ $tipos_servico = obterTiposServico();
                 </form>
             </div>
 
+
             <!-- 4. MONITOR DE TOTAIS (Canto Inferior Direito) -->
             <div class="grid-item">
-                <h3><i class="bi bi-speedometer2"></i> Monitor</h3>
+                <h3>
+                    <i class="bi bi-speedometer2"></i> Monitor
+                    <button type="button" class="btn-pdf-inline" onclick="abrirModalRelatorio()" title="Gerar PDF">
+                        <i class="bi bi-file-pdf"></i>
+                    </button>
+                </h3>
                 <div class="stats-grid-compact">
                     <div class="stat-card-compact">
                         <h4>Total de Horas</h4>
@@ -768,11 +829,6 @@ $tipos_servico = obterTiposServico();
                         <h4>Tipos de Serviço</h4>
                         <div class="value"><?php echo count($horas_por_tipo); ?></div>
                     </div>
-                </div>
-                <div style="margin-top: 15px; text-align: center;">
-                    <button type="button" class="btn-primary-custom" onclick="abrirModalRelatorio()">
-                        <i class="bi bi-file-pdf"></i> Gerar PDF
-                    </button>
                 </div>
             </div>
         </div>
