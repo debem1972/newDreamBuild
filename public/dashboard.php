@@ -94,7 +94,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['acao']) && $_POST['ac
 // ========== OBTER LANÇAMENTOS ==========
 $filtro_data = isset($_GET['filtro_data']) ? limparPost($_GET['filtro_data']) : '';
 $filtro_tipo = isset($_GET['filtro_tipo']) ? limparPost($_GET['filtro_tipo']) : '';
-$filtro_periodo = isset($_GET['filtro_periodo']) ? limparPost($_GET['filtro_periodo']) : '30'; // 30 dias por padrão
+$filtro_periodo = isset($_GET['filtro_periodo']) ? limparPost($_GET['filtro_periodo']) : '30';
 
 // Paginação
 $itens_por_pagina = 5;
@@ -114,34 +114,28 @@ if (!empty($filtro_tipo)) {
     $params[] = $filtro_tipo;
 }
 
-// Filtrar por período
 $data_inicio = date('Y-m-d', strtotime("-{$filtro_periodo} days"));
 $sql .= " AND data >= ?";
 $params[] = $data_inicio;
 
 $sql .= " ORDER BY data DESC, entrada DESC";
 
-// Contar total de registros
-// Contar total de registros
 $stmt_count = $pdo->prepare($sql);
 $stmt_count->execute($params);
 $total_registros = $stmt_count->rowCount();
 $total_paginas = ($total_registros > 0) ? ceil($total_registros / $itens_por_pagina) : 1;
 
-// Validar página
 if ($pagina_atual > $total_paginas && $total_paginas > 0) {
     $pagina_atual = $total_paginas;
 }
 
-// Calcular offset
 $offset = ($pagina_atual - 1) * $itens_por_pagina;
 if ($offset < 0) $offset = 0;
 
-// Obter registros da página - USANDO INTVAL para forçar tipo inteiro
 $sql .= " LIMIT " . intval($itens_por_pagina) . " OFFSET " . intval($offset);
 
 $stmt = $pdo->prepare($sql);
-$stmt->execute($params); // NÃO inclua $itens_por_pagina e $offset aqui
+$stmt->execute($params);
 $lancamentos = $stmt->fetchAll();
 
 // Obter todos os lançamentos para cálculos de totais
@@ -209,177 +203,94 @@ $tipos_servico = obterTiposServico();
         body {
             background-color: #f5f7fa;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            overflow-x: hidden;
         }
 
         .navbar {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            padding: 12px 0;
         }
 
         .navbar-brand {
             font-weight: 700;
-            font-size: 1.5rem;
-        }
-
-        .container-main {
-            padding: 30px 20px;
-            max-width: 1400px;
-            margin: 0 auto;
-        }
-
-        .header-section {
-            margin-bottom: 30px;
-        }
-
-        .header-section h1 {
-            color: #333;
-            font-weight: 700;
-            margin-bottom: 10px;
-        }
-
-        .header-section p {
-            color: #666;
-            font-size: 0.95rem;
-        }
-
-        .alert-custom {
-            margin-bottom: 20px;
-            padding: 15px;
-            border-radius: 5px;
-            animation: slideIn 0.3s ease;
-        }
-
-        .alert-custom.success {
-            background-color: #d4edda;
-            color: #155724;
-            border: 1px solid #c3e6cb;
-        }
-
-        .alert-custom.error {
-            background-color: #f8d7da;
-            color: #721c24;
-            border: 1px solid #f5c6cb;
-        }
-
-        @keyframes slideIn {
-            from {
-                transform: translateY(-20px);
-                opacity: 0;
-            }
-
-            to {
-                transform: translateY(0);
-                opacity: 1;
-            }
-        }
-
-        .card-custom {
-            background: white;
-            border-radius: 10px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
-            padding: 25px;
-            margin-bottom: 25px;
-            transition: transform 0.3s, box-shadow 0.3s;
-        }
-
-        .card-custom:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.12);
-        }
-
-        .card-custom h2 {
-            color: #333;
-            font-weight: 600;
-            margin-bottom: 20px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .card-custom h2 i {
-            color: #667eea;
             font-size: 1.3rem;
         }
 
-        .stats-grid {
+        /* LAYOUT PRINCIPAL - Grid 2x2 + Tabela embaixo */
+        .main-wrapper {
+            display: flex;
+            flex-direction: column;
+            height: calc(100vh - 56px);
+            padding: 15px;
+            gap: 15px;
+        }
+
+        .grid-container {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 20px;
-            margin-bottom: 25px;
+            grid-template-columns: 1fr 1fr;
+            grid-template-rows: 1fr 1fr;
+            gap: 15px;
+            flex: 0 0 auto;
+            height: calc(60vh - 40px);
+            min-height: 500px;
         }
 
-        .stat-card {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 20px;
-            border-radius: 10px;
-            text-align: center;
-            box-shadow: 0 2px 10px rgba(102, 126, 234, 0.2);
-        }
-
-        .stat-card h3 {
-            font-size: 0.9rem;
-            font-weight: 500;
-            margin-bottom: 10px;
-            opacity: 0.9;
-        }
-
-        .stat-card .value {
-            font-size: 2rem;
-            font-weight: 700;
-        }
-
-        .form-section {
+        .grid-item {
             background: white;
             border-radius: 10px;
             box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
-            padding: 25px;
-            margin-bottom: 25px;
-        }
-
-        .form-section h3 {
-            color: #333;
-            font-weight: 600;
-            margin-bottom: 20px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .form-section h3 i {
-            color: #667eea;
-        }
-
-        .form-row {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 15px;
-            margin-bottom: 15px;
-        }
-
-        .form-group {
+            padding: 20px;
+            overflow-y: auto;
             display: flex;
             flex-direction: column;
         }
 
-        .form-group label {
+        .grid-item h3 {
+            color: #333;
+            font-weight: 600;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 1.1rem;
+            flex-shrink: 0;
+        }
+
+        .grid-item h3 i {
+            color: #667eea;
+        }
+
+        /* FORMULÁRIO DE LANÇAMENTO */
+        .form-compact {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            flex: 1;
+        }
+
+        .form-compact .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .form-compact label {
             color: #333;
             font-weight: 500;
-            margin-bottom: 8px;
-            font-size: 0.95rem;
+            margin-bottom: 6px;
+            font-size: 0.85rem;
         }
 
-        .form-group input,
-        .form-group select {
-            padding: 12px;
+        .form-compact input,
+        .form-compact select {
+            padding: 8px;
             border: 1px solid #ddd;
             border-radius: 5px;
-            font-size: 1rem;
-            transition: border-color 0.3s;
+            font-size: 0.9rem;
         }
 
-        .form-group input:focus,
-        .form-group select:focus {
+        .form-compact input:focus,
+        .form-compact select:focus {
             outline: none;
             border-color: #667eea;
             box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
@@ -388,41 +299,121 @@ $tipos_servico = obterTiposServico();
         .btn-primary-custom {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
-            padding: 12px 30px;
+            padding: 10px 20px;
             border: none;
             border-radius: 5px;
             font-weight: 600;
             cursor: pointer;
-            transition: transform 0.2s, box-shadow 0.2s;
+            transition: transform 0.2s;
+            font-size: 0.9rem;
         }
 
         .btn-primary-custom:hover {
             transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        /* FILTROS */
+        .filter-compact {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .filter-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: auto;
         }
 
         .btn-secondary-custom {
             background: #6c757d;
             color: white;
-            padding: 12px 30px;
+            padding: 8px 16px;
             border: none;
             border-radius: 5px;
             font-weight: 600;
             cursor: pointer;
-            transition: transform 0.2s, box-shadow 0.2s;
+            font-size: 0.85rem;
+            text-decoration: none;
+            display: inline-block;
         }
 
         .btn-secondary-custom:hover {
             background: #5a6268;
-            transform: translateY(-2px);
         }
 
-        .table-responsive {
+        /* DASHBOARD COM GRÁFICOS */
+        .chart-wrapper {
+            flex: 1;
+            display: flex;
+            gap: 15px;
+            min-height: 0;
+        }
+
+        .chart-box {
+            flex: 1;
+            position: relative;
+            min-height: 0;
+        }
+
+        .chart-box canvas {
+            max-height: 100%;
+        }
+
+        /* MONITOR DE TOTAIS */
+        .stats-grid-compact {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            flex: 1;
+        }
+
+        .stat-card-compact {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .stat-card-compact h4 {
+            font-size: 0.85rem;
+            font-weight: 500;
+            margin-bottom: 8px;
+            opacity: 0.9;
+        }
+
+        .stat-card-compact .value {
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+
+        /* TABELA DE LANÇAMENTOS */
+        .table-container {
+            background: white;
             border-radius: 10px;
-            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+            padding: 20px;
+            flex: 1;
+            overflow-y: auto;
+            min-height: 0;
+        }
+
+        .table-container h3 {
+            color: #333;
+            font-weight: 600;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .table-container h3 i {
+            color: #667eea;
         }
 
         table {
+            width: 100%;
             background: white;
             border-collapse: collapse;
         }
@@ -430,18 +421,22 @@ $tipos_servico = obterTiposServico();
         table thead {
             background: #f8f9fa;
             border-bottom: 2px solid #dee2e6;
+            position: sticky;
+            top: 0;
         }
 
         table th {
             color: #333;
             font-weight: 600;
-            padding: 15px;
+            padding: 10px;
             text-align: left;
+            font-size: 0.85rem;
         }
 
         table td {
-            padding: 15px;
+            padding: 10px;
             border-bottom: 1px solid #dee2e6;
+            font-size: 0.85rem;
         }
 
         table tbody tr:hover {
@@ -449,11 +444,11 @@ $tipos_servico = obterTiposServico();
         }
 
         .btn-action {
-            padding: 6px 12px;
+            padding: 5px 10px;
             border: none;
-            border-radius: 5px;
+            border-radius: 4px;
             cursor: pointer;
-            font-size: 0.85rem;
+            font-size: 0.75rem;
             transition: all 0.2s;
             margin-right: 5px;
         }
@@ -476,27 +471,43 @@ $tipos_servico = obterTiposServico();
             background-color: #c82333;
         }
 
-        .chart-container {
-            position: relative;
-            height: 300px;
-            margin-bottom: 20px;
+        /* ALERTAS */
+        .alert-custom {
+            position: fixed;
+            top: 70px;
+            right: 20px;
+            max-width: 400px;
+            padding: 15px;
+            border-radius: 5px;
+            z-index: 9999;
+            animation: slideIn 0.3s ease;
         }
 
-        .filter-section {
-            background: white;
-            border-radius: 10px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
-            padding: 20px;
-            margin-bottom: 25px;
+        .alert-custom.success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
         }
 
-        .filter-row {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-            gap: 15px;
-            align-items: end;
+        .alert-custom.error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
         }
 
+        @keyframes slideIn {
+            from {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        /* MODAIS */
         .modal {
             display: none;
             position: fixed;
@@ -506,23 +517,12 @@ $tipos_servico = obterTiposServico();
             width: 100%;
             height: 100%;
             background-color: rgba(0, 0, 0, 0.5);
-            animation: fadeIn 0.3s ease;
         }
 
         .modal.show {
             display: flex;
             align-items: center;
             justify-content: center;
-        }
-
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-            }
-
-            to {
-                opacity: 1;
-            }
         }
 
         .modal-content {
@@ -532,19 +532,6 @@ $tipos_servico = obterTiposServico();
             width: 90%;
             max-width: 500px;
             box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
-            animation: slideUp 0.3s ease;
-        }
-
-        @keyframes slideUp {
-            from {
-                transform: translateY(50px);
-                opacity: 0;
-            }
-
-            to {
-                transform: translateY(0);
-                opacity: 1;
-            }
         }
 
         .modal-header {
@@ -560,6 +547,7 @@ $tipos_servico = obterTiposServico();
             margin: 0;
             color: #333;
             font-weight: 600;
+            font-size: 1.3rem;
         }
 
         .modal-close {
@@ -570,27 +558,11 @@ $tipos_servico = obterTiposServico();
             color: #666;
         }
 
-        .modal-close:hover {
-            color: #333;
-        }
-
         .modal-footer {
             display: flex;
             gap: 10px;
             margin-top: 20px;
             justify-content: flex-end;
-        }
-
-        .no-data {
-            text-align: center;
-            padding: 40px 20px;
-            color: #666;
-        }
-
-        .no-data i {
-            font-size: 3rem;
-            color: #ddd;
-            margin-bottom: 10px;
         }
 
         .logout-btn {
@@ -601,10 +573,17 @@ $tipos_servico = obterTiposServico();
             border-radius: 5px;
             cursor: pointer;
             transition: background 0.3s;
+            text-decoration: none;
         }
 
         .logout-btn:hover {
             background: rgba(255, 255, 255, 0.3);
+        }
+
+        .no-data {
+            text-align: center;
+            padding: 20px;
+            color: #666;
         }
 
         /* Paginação */
@@ -612,23 +591,20 @@ $tipos_servico = obterTiposServico();
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 10px;
-            margin-top: 25px;
-            padding: 20px;
-            background-color: #f9f9f9;
-            border-radius: 8px;
+            gap: 8px;
+            margin-top: 15px;
             flex-wrap: wrap;
         }
 
         .pagination-btn {
-            padding: 8px 12px;
+            padding: 6px 10px;
             border: 1px solid #ddd;
             background-color: white;
             color: #333;
-            border-radius: 5px;
+            border-radius: 4px;
             cursor: pointer;
             transition: all 0.3s ease;
-            font-weight: 500;
+            font-size: 0.85rem;
             text-decoration: none;
             display: inline-block;
         }
@@ -648,14 +624,14 @@ $tipos_servico = obterTiposServico();
         .pagination-btn.disabled {
             opacity: 0.5;
             cursor: not-allowed;
-            background-color: #f5f5f5;
         }
 
         .pagination-info {
             color: #666;
-            font-size: 0.95rem;
-            font-weight: 500;
+            font-size: 0.85rem;
         }
+
+        /* CONTINUA NA PARTE 2 - Adicionar os scripts e modais */
     </style>
 </head>
 
@@ -671,85 +647,28 @@ $tipos_servico = obterTiposServico();
         </div>
     </nav>
 
-    <!-- Main Container -->
-    <div class="container-main">
-        <!-- Header -->
-        <div class="header-section">
-            <h1>📊 Dashboard</h1>
-            <p>Gerencie seus lançamentos de horas de trabalho</p>
+    <!-- Mensagens -->
+    <?php if (!empty($mensagem)): ?>
+        <div class="alert-custom <?php echo $tipo_mensagem; ?>">
+            <?php echo $mensagem; ?>
         </div>
+    <?php endif; ?>
 
-        <!-- Mensagens -->
-        <?php if (!empty($mensagem)): ?>
-            <div class="alert-custom <?php echo $tipo_mensagem; ?>">
-                <?php echo $mensagem; ?>
-            </div>
-        <?php endif; ?>
+    <!-- Main Wrapper -->
+    <div class="main-wrapper">
+        <!-- Grid 2x2 -->
+        <div class="grid-container">
+            <!-- 1. FORMULÁRIO DE NOVO LANÇAMENTO (Canto Superior Esquerdo) -->
+            <div class="grid-item">
+                <h3><i class="bi bi-plus-circle"></i> Novo Lançamento</h3>
+                <form method="POST" class="form-compact">
+                    <input type="hidden" name="acao" value="inserir">
 
-        <!-- Stats -->
-        <div class="stats-grid">
-            <div class="stat-card">
-                <h3>Total de Horas</h3>
-                <div class="value"><?php echo formatarHoras($total_horas); ?></div>
-            </div>
-            <div class="stat-card">
-                <h3>Lançamentos</h3>
-                <div class="value"><?php echo count($lancamentos); ?></div>
-            </div>
-            <div class="stat-card">
-                <h3>Dias Trabalhados</h3>
-                <div class="value"><?php echo count($horas_por_dia); ?></div>
-            </div>
-            <div class="stat-card">
-                <h3>Tipos de Serviço</h3>
-                <div class="value"><?php echo count($horas_por_tipo); ?></div>
-            </div>
-        </div>
-
-        <!-- Filtros -->
-        <div class="filter-section">
-            <form method="GET" class="filter-row">
-                <div class="form-group">
-                    <label for="filtro_data">Data</label>
-                    <input type="date" id="filtro_data" name="filtro_data" value="<?php echo htmlspecialchars($filtro_data); ?>">
-                </div>
-                <div class="form-group">
-                    <label for="filtro_tipo">Tipo de Serviço</label>
-                    <select id="filtro_tipo" name="filtro_tipo">
-                        <option value="">Todos</option>
-                        <?php foreach ($tipos_servico as $key => $label): ?>
-                            <option value="<?php echo htmlspecialchars($key); ?>" <?php echo ($filtro_tipo === $key) ? 'selected' : ''; ?>>
-                                <?php echo htmlspecialchars($label); ?>
-                            </option>
-                        <?php endforeach; ?>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label for="filtro_periodo">Período</label>
-                    <select id="filtro_periodo" name="filtro_periodo">
-                        <option value="7" <?php echo ($filtro_periodo === '7') ? 'selected' : ''; ?>>Últimos 7 dias</option>
-                        <option value="15" <?php echo ($filtro_periodo === '15') ? 'selected' : ''; ?>>Últimos 15 dias</option>
-                        <option value="30" <?php echo ($filtro_periodo === '30') ? 'selected' : ''; ?>>Últimos 30 dias</option>
-                        <option value="90" <?php echo ($filtro_periodo === '90') ? 'selected' : ''; ?>>Últimos 90 dias</option>
-                    </select>
-                </div>
-                <div>
-                    <button type="submit" class="btn-primary-custom">🔍 Filtrar</button>
-                    <a href="dashboard.php" class="btn-secondary-custom">🔄 Limpar</a>
-                </div>
-            </form>
-        </div>
-
-        <!-- Formulário de Inserção -->
-        <div class="form-section">
-            <h3><i class="bi bi-plus-circle"></i> Novo Lançamento</h3>
-            <form method="POST">
-                <input type="hidden" name="acao" value="inserir">
-                <div class="form-row">
                     <div class="form-group">
                         <label for="data">Data</label>
                         <input type="date" id="data" name="data" required>
                     </div>
+
                     <div class="form-group">
                         <label for="tipo_servico">Tipo de Serviço</label>
                         <select id="tipo_servico" name="tipo_servico" required>
@@ -761,87 +680,150 @@ $tipos_servico = obterTiposServico();
                             <?php endforeach; ?>
                         </select>
                     </div>
+
                     <div class="form-group">
                         <label for="entrada">Hora de Entrada</label>
                         <input type="time" id="entrada" name="entrada" required>
                     </div>
+
                     <div class="form-group">
                         <label for="saida">Hora de Saída</label>
                         <input type="time" id="saida" name="saida" required>
                     </div>
-                </div>
-                <button type="submit" class="btn-primary-custom"><i class="bi bi-check-circle"></i> Registrar Lançamento</button>
-            </form>
-        </div>
 
-        <!-- Gráficos -->
-        <div class="card-custom">
-            <h2><i class="bi bi-bar-chart"></i> Análise de Horas</h2>
-            <div class="row">
-                <div class="col-md-6">
-                    <div class="chart-container">
+                    <button type="submit" class="btn-primary-custom mt-auto">
+                        <i class="bi bi-check-circle"></i> Registrar
+                    </button>
+                </form>
+            </div>
+
+            <!-- 2. DASHBOARD COM GRÁFICOS (Canto Superior Direito) -->
+            <div class="grid-item">
+                <h3><i class="bi bi-bar-chart"></i> Análise de Horas</h3>
+                <div class="chart-wrapper">
+                    <div class="chart-box">
                         <canvas id="chartHorasPorDia"></canvas>
                     </div>
-                </div>
-                <div class="col-md-6">
-                    <div class="chart-container">
+                    <div class="chart-box">
                         <canvas id="chartHorasPorTipo"></canvas>
                     </div>
                 </div>
             </div>
+
+            <!-- 3. FILTROS (Canto Inferior Esquerdo) -->
+            <div class="grid-item">
+                <h3><i class="bi bi-funnel"></i> Filtros</h3>
+                <form method="GET" class="filter-compact">
+                    <div class="form-group">
+                        <label for="filtro_data">Data Específica</label>
+                        <input type="date" id="filtro_data" name="filtro_data" value="<?php echo htmlspecialchars($filtro_data); ?>">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="filtro_tipo">Tipo de Serviço</label>
+                        <select id="filtro_tipo" name="filtro_tipo">
+                            <option value="">Todos</option>
+                            <?php foreach ($tipos_servico as $key => $label): ?>
+                                <option value="<?php echo htmlspecialchars($key); ?>" <?php echo ($filtro_tipo === $key) ? 'selected' : ''; ?>>
+                                    <?php echo htmlspecialchars($label); ?>
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="filtro_periodo">Período</label>
+                        <select id="filtro_periodo" name="filtro_periodo">
+                            <option value="7" <?php echo ($filtro_periodo === '7') ? 'selected' : ''; ?>>Últimos 7 dias</option>
+                            <option value="15" <?php echo ($filtro_periodo === '15') ? 'selected' : ''; ?>>Últimos 15 dias</option>
+                            <option value="30" <?php echo ($filtro_periodo === '30') ? 'selected' : ''; ?>>Últimos 30 dias</option>
+                            <option value="90" <?php echo ($filtro_periodo === '90') ? 'selected' : ''; ?>>Últimos 90 dias</option>
+                        </select>
+                    </div>
+
+                    <div class="filter-actions mt-auto">
+                        <button type="submit" class="btn-primary-custom">🔍 Filtrar</button>
+                        <a href="dashboard.php" class="btn-secondary-custom">🔄 Limpar</a>
+                    </div>
+                </form>
+            </div>
+
+            <!-- 4. MONITOR DE TOTAIS (Canto Inferior Direito) -->
+            <div class="grid-item">
+                <h3><i class="bi bi-speedometer2"></i> Monitor</h3>
+                <div class="stats-grid-compact">
+                    <div class="stat-card-compact">
+                        <h4>Total de Horas</h4>
+                        <div class="value"><?php echo formatarHoras($total_horas); ?></div>
+                    </div>
+                    <div class="stat-card-compact">
+                        <h4>Lançamentos</h4>
+                        <div class="value"><?php echo count($lancamentos_totais); ?></div>
+                    </div>
+                    <div class="stat-card-compact">
+                        <h4>Dias Trabalhados</h4>
+                        <div class="value"><?php echo count($horas_por_dia); ?></div>
+                    </div>
+                    <div class="stat-card-compact">
+                        <h4>Tipos de Serviço</h4>
+                        <div class="value"><?php echo count($horas_por_tipo); ?></div>
+                    </div>
+                </div>
+                <div style="margin-top: 15px; text-align: center;">
+                    <button type="button" class="btn-primary-custom" onclick="abrirModalRelatorio()">
+                        <i class="bi bi-file-pdf"></i> Gerar PDF
+                    </button>
+                </div>
+            </div>
         </div>
 
-        <!-- Tabela de Lançamentos -->
-        <div class="card-custom">
-            <h2><i class="bi bi-table"></i> Lançamentos Registrados</h2>
+        <!-- TABELA DE LANÇAMENTOS (Abaixo do Grid) -->
+        <div class="table-container">
+            <h3><i class="bi bi-table"></i> Lançamentos Registrados</h3>
             <?php if (count($lancamentos) > 0): ?>
-                <div class="table-responsive">
-                    <table class="table table-hover">
-                        <thead>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Data</th>
+                            <th>Tipo de Serviço</th>
+                            <th>Entrada</th>
+                            <th>Saída</th>
+                            <th>Horas</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php foreach ($lancamentos as $lancamento): ?>
+                            <?php $horas = calcularHoras($lancamento['entrada'], $lancamento['saida']); ?>
                             <tr>
-                                <th>Data</th>
-                                <th>Tipo de Serviço</th>
-                                <th>Entrada</th>
-                                <th>Saída</th>
-                                <th>Horas Trabalhadas</th>
-                                <th>Ações</th>
+                                <td><?php echo converterDataMySQL($lancamento['data']); ?></td>
+                                <td><?php echo htmlspecialchars($lancamento['tipo_servico']); ?></td>
+                                <td><?php echo htmlspecialchars($lancamento['entrada']); ?></td>
+                                <td><?php echo htmlspecialchars($lancamento['saida']); ?></td>
+                                <td><strong><?php echo formatarHoras($horas); ?></strong></td>
+                                <td>
+                                    <button type="button" class="btn-action btn-edit" onclick="abrirModalEdicao(<?php echo $lancamento['id']; ?>, '<?php echo $lancamento['data']; ?>', '<?php echo htmlspecialchars($lancamento['tipo_servico']); ?>', '<?php echo $lancamento['entrada']; ?>', '<?php echo $lancamento['saida']; ?>')">
+                                        ✏️ Editar
+                                    </button>
+                                    <button type="button" class="btn-action btn-delete" onclick="confirmarDelecao(<?php echo $lancamento['id']; ?>)">
+                                        🗑️ Deletar
+                                    </button>
+                                </td>
                             </tr>
-                        </thead>
-                        <tbody>
-                            <?php foreach ($lancamentos as $lancamento): ?>
-                                <?php $horas = calcularHoras($lancamento['entrada'], $lancamento['saida']); ?>
-                                <tr>
-                                    <td><?php echo converterDataMySQL($lancamento['data']); ?></td>
-                                    <td><?php echo htmlspecialchars($lancamento['tipo_servico']); ?></td>
-                                    <td><?php echo htmlspecialchars($lancamento['entrada']); ?></td>
-                                    <td><?php echo htmlspecialchars($lancamento['saida']); ?></td>
-                                    <td><strong><?php echo formatarHoras($horas); ?></strong></td>
-                                    <td>
-                                        <button type="button" class="btn-action btn-edit" onclick="abrirModalEdicao(<?php echo $lancamento['id']; ?>, '<?php echo $lancamento['data']; ?>', '<?php echo htmlspecialchars($lancamento['tipo_servico']); ?>', '<?php echo $lancamento['entrada']; ?>', '<?php echo $lancamento['saida']; ?>')">
-                                            ✏️ Editar
-                                        </button>
-                                        <button type="button" class="btn-action btn-delete" onclick="confirmarDelecao(<?php echo $lancamento['id']; ?>)">
-                                            🗑️ Deletar
-                                        </button>
-                                    </td>
-                                </tr>
-                            <?php endforeach; ?>
-                        </tbody>
-                    </table>
-                </div>
+                        <?php endforeach; ?>
+                    </tbody>
+                </table>
+
                 <!-- Paginação -->
                 <?php if ($total_paginas > 1): ?>
                     <div class="pagination-container">
-                        <!-- Botão Anterior -->
                         <?php if ($pagina_atual > 1): ?>
                             <a href="?pagina=<?php echo $pagina_atual - 1; ?>&filtro_data=<?php echo urlencode($filtro_data); ?>&filtro_tipo=<?php echo urlencode($filtro_tipo); ?>&filtro_periodo=<?php echo urlencode($filtro_periodo); ?>" class="pagination-btn">« Anterior</a>
                         <?php else: ?>
                             <span class="pagination-btn disabled">« Anterior</span>
                         <?php endif; ?>
 
-                        <!-- Números de Página -->
                         <?php
-                        // Mostrar até 5 páginas por vez
                         $inicio = max(1, $pagina_atual - 2);
                         $fim = min($total_paginas, $pagina_atual + 2);
 
@@ -868,30 +850,21 @@ $tipos_servico = obterTiposServico();
                         }
                         ?>
 
-                        <!-- Botão Próximo -->
                         <?php if ($pagina_atual < $total_paginas): ?>
                             <a href="?pagina=<?php echo $pagina_atual + 1; ?>&filtro_data=<?php echo urlencode($filtro_data); ?>&filtro_tipo=<?php echo urlencode($filtro_tipo); ?>&filtro_periodo=<?php echo urlencode($filtro_periodo); ?>" class="pagination-btn">Próximo »</a>
                         <?php else: ?>
                             <span class="pagination-btn disabled">Próximo »</span>
                         <?php endif; ?>
 
-                        <!-- Informações de Página -->
-                        <span class="pagination-info">Página <?php echo $pagina_atual; ?> de <?php echo $total_paginas; ?> (<?php echo $total_registros; ?> registros)</span>
+                        <span class="pagination-info">Página <?php echo $pagina_atual; ?> de <?php echo $total_paginas; ?></span>
                     </div>
                 <?php endif; ?>
             <?php else: ?>
                 <div class="no-data">
-                    <i class="bi bi-inbox"></i>
+                    <i class="bi bi-inbox" style="font-size: 2rem; color: #ddd;"></i>
                     <p>Nenhum lançamento encontrado</p>
                 </div>
             <?php endif; ?>
-        </div>
-
-        <!-- Botão para Gerar Relatório -->
-        <div style="margin-top: 25px; text-align: center;">
-            <button type="button" class="btn-primary-custom" onclick="abrirModalRelatorio()">
-                <i class="bi bi-file-pdf"></i> Gerar Relatório em PDF
-            </button>
         </div>
     </div>
 
@@ -930,7 +903,7 @@ $tipos_servico = obterTiposServico();
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn-secondary-custom" onclick="fecharModalEdicao()">Cancelar</button>
-                    <button type="submit" class="btn-primary-custom">Salvar Alterações</button>
+                    <button type="submit" class="btn-primary-custom">Salvar</button>
                 </div>
             </form>
         </div>
@@ -968,7 +941,7 @@ $tipos_servico = obterTiposServico();
         </div>
     </div>
 
-    <!-- Modal de Confirmação de Deleção -->
+    <!-- Modal de Deleção -->
     <div id="modalDelecao" class="modal">
         <div class="modal-content">
             <div class="modal-header">
@@ -988,7 +961,7 @@ $tipos_servico = obterTiposServico();
     </div>
 
     <script>
-        // ========== FUNÇÕES DE MODAL ==========
+        // Funções de Modal
         function abrirModalEdicao(id, data, tipo, entrada, saida) {
             document.getElementById('edit_id').value = id;
             document.getElementById('edit_data').value = data;
@@ -1019,32 +992,27 @@ $tipos_servico = obterTiposServico();
             document.getElementById('modalDelecao').classList.remove('show');
         }
 
-        // Fechar modal ao clicar fora
         window.onclick = function(event) {
-            let modal = event.target;
-            if (modal.classList.contains('modal')) {
-                modal.classList.remove('show');
+            if (event.target.classList.contains('modal')) {
+                event.target.classList.remove('show');
             }
         }
 
-        // ========== GRÁFICOS ==========
+        // Gráficos
         <?php
-        // Preparar dados para gráficos
         $labels_dias = array_keys($horas_por_dia);
         $dados_dias = array_values($horas_por_dia);
-
         $labels_tipos = array_keys($horas_por_tipo);
         $dados_tipos = array_values($horas_por_tipo);
         ?>
 
-        // Gráfico de Horas por Dia
         const ctxDias = document.getElementById('chartHorasPorDia').getContext('2d');
         new Chart(ctxDias, {
             type: 'bar',
             data: {
                 labels: <?php echo json_encode(array_map('converterDataMySQL', $labels_dias)); ?>,
                 datasets: [{
-                    label: 'Horas Trabalhadas',
+                    label: 'Horas',
                     data: <?php echo json_encode($dados_dias); ?>,
                     backgroundColor: 'rgba(102, 126, 234, 0.7)',
                     borderColor: 'rgba(102, 126, 234, 1)',
@@ -1054,30 +1022,20 @@ $tipos_servico = obterTiposServico();
             },
             options: {
                 responsive: true,
-                maintainAspectRatio: false,
+                maintainAspectRatio: true,
                 plugins: {
                     legend: {
-                        display: true,
-                        labels: {
-                            font: {
-                                size: 12
-                            }
-                        }
+                        display: false
                     }
                 },
                 scales: {
                     y: {
-                        beginAtZero: true,
-                        title: {
-                            display: true,
-                            text: 'Horas'
-                        }
+                        beginAtZero: true
                     }
                 }
             }
         });
 
-        // Gráfico de Horas por Tipo de Serviço
         const ctxTipos = document.getElementById('chartHorasPorTipo').getContext('2d');
         new Chart(ctxTipos, {
             type: 'doughnut',
@@ -1090,25 +1048,19 @@ $tipos_servico = obterTiposServico();
                         'rgba(118, 75, 162, 0.8)',
                         'rgba(244, 143, 177, 0.8)',
                         'rgba(66, 165, 245, 0.8)'
-                    ],
-                    borderColor: [
-                        'rgba(102, 126, 234, 1)',
-                        'rgba(118, 75, 162, 1)',
-                        'rgba(244, 143, 177, 1)',
-                        'rgba(66, 165, 245, 1)'
-                    ],
-                    borderWidth: 2
+                    ]
                 }]
             },
             options: {
                 responsive: true,
-                maintainAspectRatio: false,
+                maintainAspectRatio: true,
                 plugins: {
                     legend: {
                         display: true,
+                        position: 'bottom',
                         labels: {
                             font: {
-                                size: 12
+                                size: 10
                             }
                         }
                     }
@@ -1116,8 +1068,6 @@ $tipos_servico = obterTiposServico();
             }
         });
     </script>
-
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 
 </html>
