@@ -92,7 +92,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['acao']) && $_POST['ac
 }
 
 // ========== OBTER LANÇAMENTOS ==========
-$filtro_data = isset($_GET['filtro_data']) ? limparPost($_GET['filtro_data']) : '';
+//$filtro_data = isset($_GET['filtro_data']) ? limparPost($_GET['filtro_data']) : '';
+$filtro_data_inicio = isset($_GET['filtro_data_inicio']) ? limparPost($_GET['filtro_data_inicio']) : '';
+$filtro_data_fim = isset($_GET['filtro_data_fim']) ? limparPost($_GET['filtro_data_fim']) : '';
 $filtro_tipo = isset($_GET['filtro_tipo']) ? limparPost($_GET['filtro_tipo']) : '';
 $filtro_periodo = isset($_GET['filtro_periodo']) ? limparPost($_GET['filtro_periodo']) : '30';
 
@@ -104,9 +106,20 @@ if ($pagina_atual < 1) $pagina_atual = 1;
 $sql = "SELECT * FROM lancamentos WHERE usuario_id = ?";
 $params = array($usuario_id);
 
-if (!empty($filtro_data)) {
+/*if (!empty($filtro_data)) {
     $sql .= " AND data = ?";
     $params[] = $filtro_data;
+}*/
+if (!empty($filtro_data_inicio) && !empty($filtro_data_fim)) {
+    $sql .= " AND data BETWEEN ? AND ?";
+    $params[] = $filtro_data_inicio;
+    $params[] = $filtro_data_fim;
+} elseif (!empty($filtro_data_inicio)) {
+    $sql .= " AND data >= ?";
+    $params[] = $filtro_data_inicio;
+} elseif (!empty($filtro_data_fim)) {
+    $sql .= " AND data <= ?";
+    $params[] = $filtro_data_fim;
 }
 
 if (!empty($filtro_tipo)) {
@@ -142,9 +155,20 @@ $lancamentos = $stmt->fetchAll();
 $sql_totais = "SELECT * FROM lancamentos WHERE usuario_id = ?";
 $params_totais = array($usuario_id);
 
-if (!empty($filtro_data)) {
+/*if (!empty($filtro_data)) {
     $sql_totais .= " AND data = ?";
     $params_totais[] = $filtro_data;
+}*/
+if (!empty($filtro_data_inicio) && !empty($filtro_data_fim)) {
+    $sql_totais .= " AND data BETWEEN ? AND ?";
+    $params_totais[] = $filtro_data_inicio;
+    $params_totais[] = $filtro_data_fim;
+} elseif (!empty($filtro_data_inicio)) {
+    $sql_totais .= " AND data >= ?";
+    $params_totais[] = $filtro_data_inicio;
+} elseif (!empty($filtro_data_fim)) {
+    $sql_totais .= " AND data <= ?";
+    $params_totais[] = $filtro_data_fim;
 }
 
 if (!empty($filtro_tipo)) {
@@ -303,7 +327,7 @@ $tipos_servico = obterTiposServico();
         }
 
         .grid-item h3 i {
-            color: #ffff;
+            color: black;
         }
 
         .btn-pdf-inline:hover {
@@ -769,9 +793,22 @@ $tipos_servico = obterTiposServico();
             <div class="grid-item">
                 <h3><i class="bi bi-funnel"></i> Filtros</h3>
                 <form method="GET" class="filter-compact">
-                    <div class="form-group">
+                    <!--<div class="form-group">
                         <label for="filtro_data">Data Específica</label>
                         <input type="date" id="filtro_data" name="filtro_data" value="<?php echo htmlspecialchars($filtro_data); ?>">
+                    </div>-->
+                    <div class="form-group">
+                        <label style="font-weight: 600; margin-bottom: 8px;">Intervalo</label>
+                        <div style="display: flex; flex-direction: column; gap: 8px;">
+                            <div>
+                                <label for="filtro_data_inicio" style="font-size: 0.75rem; margin-bottom: 4px;">De</label>
+                                <input type="date" id="filtro_data_inicio" name="filtro_data_inicio" value="<?php echo htmlspecialchars($filtro_data_inicio); ?>">
+                            </div>
+                            <div>
+                                <label for="filtro_data_fim" style="font-size: 0.75rem; margin-bottom: 4px;">Até</label>
+                                <input type="date" id="filtro_data_fim" name="filtro_data_fim" value="<?php echo htmlspecialchars($filtro_data_fim); ?>">
+                            </div>
+                        </div>
                     </div>
 
                     <div class="form-group">
@@ -874,7 +911,7 @@ $tipos_servico = obterTiposServico();
                 <?php if ($total_paginas > 1): ?>
                     <div class="pagination-container">
                         <?php if ($pagina_atual > 1): ?>
-                            <a href="?pagina=<?php echo $pagina_atual - 1; ?>&filtro_data=<?php echo urlencode($filtro_data); ?>&filtro_tipo=<?php echo urlencode($filtro_tipo); ?>&filtro_periodo=<?php echo urlencode($filtro_periodo); ?>" class="pagination-btn">« Anterior</a>
+                            <a href="?pagina=<?php echo $pagina_atual - 1; ?>&filtro_data_inicio=<?php echo urlencode($filtro_data_inicio); ?>&filtro_data_fim=<?php echo urlencode($filtro_data_fim); ?>&filtro_tipo=<?php echo urlencode($filtro_tipo); ?>&filtro_periodo=<?php echo urlencode($filtro_periodo); ?>" class="pagination-btn">« Anterior</a>
                         <?php else: ?>
                             <span class="pagination-btn disabled">« Anterior</span>
                         <?php endif; ?>
@@ -884,7 +921,7 @@ $tipos_servico = obterTiposServico();
                         $fim = min($total_paginas, $pagina_atual + 2);
 
                         if ($inicio > 1) {
-                            echo '<a href="?pagina=1&filtro_data=' . urlencode($filtro_data) . '&filtro_tipo=' . urlencode($filtro_tipo) . '&filtro_periodo=' . urlencode($filtro_periodo) . '" class="pagination-btn">1</a>';
+                            echo '<a href="?pagina=1&filtro_data_inicio=' . urlencode($filtro_data_inicio) . '&filtro_data_fim=' . urlencode($filtro_data_fim) . '&filtro_tipo=' . urlencode($filtro_tipo) . '&filtro_periodo=' . urlencode($filtro_periodo) . '" class="pagination-btn">1</a>';
                             if ($inicio > 2) {
                                 echo '<span class="pagination-btn disabled">...</span>';
                             }
@@ -894,7 +931,7 @@ $tipos_servico = obterTiposServico();
                             if ($i == $pagina_atual) {
                                 echo '<span class="pagination-btn active">' . $i . '</span>';
                             } else {
-                                echo '<a href="?pagina=' . $i . '&filtro_data=' . urlencode($filtro_data) . '&filtro_tipo=' . urlencode($filtro_tipo) . '&filtro_periodo=' . urlencode($filtro_periodo) . '" class="pagination-btn">' . $i . '</a>';
+                                echo '<a href="?pagina=' . $i . '&filtro_data_inicio=' . urlencode($filtro_data_inicio) . '&filtro_data_fim=' . urlencode($filtro_data_fim) . '&filtro_tipo=' . urlencode($filtro_tipo) . '&filtro_periodo=' . urlencode($filtro_periodo) . '" class="pagination-btn">' . $i . '</a>';
                             }
                         }
 
@@ -902,12 +939,12 @@ $tipos_servico = obterTiposServico();
                             if ($fim < $total_paginas - 1) {
                                 echo '<span class="pagination-btn disabled">...</span>';
                             }
-                            echo '<a href="?pagina=' . $total_paginas . '&filtro_data=' . urlencode($filtro_data) . '&filtro_tipo=' . urlencode($filtro_tipo) . '&filtro_periodo=' . urlencode($filtro_periodo) . '" class="pagination-btn">' . $total_paginas . '</a>';
+                            echo '<a href="?pagina=' . $total_paginas . '&filtro_data_inicio=' . urlencode($filtro_data_inicio) . '&filtro_data_fim=' . urlencode($filtro_data_fim) . '&filtro_tipo=' . urlencode($filtro_tipo) . '&filtro_periodo=' . urlencode($filtro_periodo) . '" class="pagination-btn">' . $total_paginas . '</a>';
                         }
                         ?>
 
                         <?php if ($pagina_atual < $total_paginas): ?>
-                            <a href="?pagina=<?php echo $pagina_atual + 1; ?>&filtro_data=<?php echo urlencode($filtro_data); ?>&filtro_tipo=<?php echo urlencode($filtro_tipo); ?>&filtro_periodo=<?php echo urlencode($filtro_periodo); ?>" class="pagination-btn">Próximo »</a>
+                            <a href="?pagina=<?php echo $pagina_atual + 1; ?>&filtro_data_inicio=<?php echo urlencode($filtro_data_inicio); ?>&filtro_data_fim=<?php echo urlencode($filtro_data_fim); ?>&filtro_tipo=<?php echo urlencode($filtro_tipo); ?>&filtro_periodo=<?php echo urlencode($filtro_periodo); ?>" class="pagination-btn">Próximo »</a>
                         <?php else: ?>
                             <span class="pagination-btn disabled">Próximo »</span>
                         <?php endif; ?>
