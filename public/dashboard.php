@@ -740,7 +740,7 @@ $tipos_servico = obterTiposServico();
             <!-- 1. FORMULÁRIO DE NOVO LANÇAMENTO (Canto Superior Esquerdo) -->
             <div class="grid-item">
                 <h3><i class="bi bi-plus-circle"></i> Novo Lançamento</h3>
-                <form method="POST" class="form-compact">
+                <form method="POST" class="form-compact" id="formNovoLancamento">
                     <input type="hidden" name="acao" value="inserir">
 
                     <div class="form-group">
@@ -968,7 +968,7 @@ $tipos_servico = obterTiposServico();
                 <h2>Editar Lançamento</h2>
                 <button type="button" class="modal-close" onclick="fecharModalEdicao()">×</button>
             </div>
-            <form method="POST">
+            <form method="POST" id="formEditarLancamento">
                 <input type="hidden" name="acao" value="atualizar">
                 <input type="hidden" name="id" id="edit_id">
                 <div class="form-group" style="margin-bottom: 15px;">
@@ -1042,7 +1042,7 @@ $tipos_servico = obterTiposServico();
                 <button type="button" class="modal-close" onclick="fecharModalDelecao()">×</button>
             </div>
             <p style="margin-bottom: 20px; color: #666;">Tem certeza que deseja deletar este lançamento? Esta ação não pode ser desfeita.</p>
-            <form method="POST">
+            <form method="POST" id="formDeletarLancamento">
                 <input type="hidden" name="acao" value="deletar">
                 <input type="hidden" name="id" id="delete_id">
                 <div class="modal-footer">
@@ -1160,6 +1160,230 @@ $tipos_servico = obterTiposServico();
                 }
             }
         });
+
+        // ========== AJAX - INSERÇÃO DE LANÇAMENTO ==========
+        document.getElementById('formNovoLancamento').addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            const formData = new FormData(this);
+            const submitBtn = this.querySelector('button[type="submit"]');
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="bi bi-hourglass-split"></i> Processando...';
+
+            fetch('ajax_handler.php', {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        mostrarMensagem(data.message, 'success');
+
+                        // Adicionar nova linha no topo da tabela
+                        adicionarLinhaTabela(data.lancamento);
+
+                        // Limpar formulário
+                        this.reset();
+
+                        // Atualizar estatísticas (reload necessário para gráficos)
+                        setTimeout(() => {
+                            location.reload();
+                        }, 1500);
+                    } else {
+                        mostrarMensagem(data.message, 'error');
+                    }
+                })
+                .catch(error => {
+                    mostrarMensagem('❌ Erro ao processar requisição: ' + error, 'error');
+                })
+                .finally(() => {
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = '<i class="bi bi-check-circle"></i> Registrar';
+                });
+        });
+
+        // ========== AJAX - ATUALIZAÇÃO DE LANÇAMENTO ==========
+        document.getElementById('formEditarLancamento').addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            const formData = new FormData(this);
+            const submitBtn = this.querySelector('button[type="submit"]');
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = 'Salvando...';
+
+            fetch('ajax_handler.php', {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        mostrarMensagem(data.message, 'success');
+
+                        // Atualizar linha na tabela
+                        atualizarLinhaTabela(data.lancamento);
+
+                        fecharModalEdicao();
+
+                        // Recarregar para atualizar gráficos
+                        setTimeout(() => {
+                            location.reload();
+                        }, 1500);
+                    } else {
+                        mostrarMensagem(data.message, 'error');
+                    }
+                })
+                .catch(error => {
+                    mostrarMensagem('❌ Erro ao processar requisição: ' + error, 'error');
+                })
+                .finally(() => {
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = 'Salvar';
+                });
+        });
+
+        // ========== AJAX - EXCLUSÃO DE LANÇAMENTO ==========
+        document.getElementById('formDeletarLancamento').addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            const formData = new FormData(this);
+            const submitBtn = this.querySelector('button[type="submit"]');
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = 'Deletando...';
+
+            fetch('ajax_handler.php', {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        mostrarMensagem(data.message, 'success');
+
+                        // Remover linha da tabela
+                        removerLinhaTabela(data.id);
+
+                        fecharModalDelecao();
+
+                        // Recarregar para atualizar estatísticas
+                        setTimeout(() => {
+                            location.reload();
+                        }, 1500);
+                    } else {
+                        mostrarMensagem(data.message, 'error');
+                    }
+                })
+                .catch(error => {
+                    mostrarMensagem('❌ Erro ao processar requisição: ' + error, 'error');
+                })
+                .finally(() => {
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = 'Deletar';
+                });
+        });
+
+        // ========== FUNÇÕES AUXILIARES ==========
+        function mostrarMensagem(mensagem, tipo) {
+            // Remove mensagens anteriores
+            const alertsAntigos = document.querySelectorAll('.alert-custom');
+            alertsAntigos.forEach(alert => alert.remove());
+
+            // Cria nova mensagem
+            const alertDiv = document.createElement('div');
+            alertDiv.className = `alert-custom ${tipo}`;
+            alertDiv.textContent = mensagem;
+            document.body.appendChild(alertDiv);
+
+            // Remove após 5 segundos
+            setTimeout(() => {
+                alertDiv.remove();
+            }, 5000);
+        }
+
+        function adicionarLinhaTabela(lancamento) {
+            const tbody = document.querySelector('table tbody');
+            if (!tbody) return;
+
+            const novaLinha = document.createElement('tr');
+            novaLinha.innerHTML = `
+        <td>${lancamento.data}</td>
+        <td>${lancamento.tipo_servico}</td>
+        <td>${lancamento.entrada}</td>
+        <td>${lancamento.saida}</td>
+        <td><strong>${lancamento.horas}</strong></td>
+        <td>
+            <button type="button" class="btn-action btn-edit" onclick="abrirModalEdicao(${lancamento.id}, '${lancamento.data_original}', '${lancamento.tipo_servico}', '${lancamento.entrada}', '${lancamento.saida}')">
+                ✏️ Editar
+            </button>
+            <button type="button" class="btn-action btn-delete" onclick="confirmarDelecao(${lancamento.id})">
+                🗑️ Deletar
+            </button>
+        </td>
+    `;
+
+            // Adicionar no topo da tabela
+            tbody.insertBefore(novaLinha, tbody.firstChild);
+
+            // Animação de destaque
+            novaLinha.style.backgroundColor = '#d4edda';
+            setTimeout(() => {
+                novaLinha.style.backgroundColor = '';
+            }, 2000);
+        }
+
+        function atualizarLinhaTabela(lancamento) {
+            const tbody = document.querySelector('table tbody');
+            if (!tbody) return;
+
+            const linhas = tbody.querySelectorAll('tr');
+            linhas.forEach(linha => {
+                const btnEditar = linha.querySelector('.btn-edit');
+                if (btnEditar && btnEditar.getAttribute('onclick').includes(`(${lancamento.id},`)) {
+                    linha.innerHTML = `
+                <td>${lancamento.data}</td>
+                <td>${lancamento.tipo_servico}</td>
+                <td>${lancamento.entrada}</td>
+                <td>${lancamento.saida}</td>
+                <td><strong>${lancamento.horas}</strong></td>
+                <td>
+                    <button type="button" class="btn-action btn-edit" onclick="abrirModalEdicao(${lancamento.id}, '${lancamento.data_original}', '${lancamento.tipo_servico}', '${lancamento.entrada}', '${lancamento.saida}')">
+                        ✏️ Editar
+                    </button>
+                    <button type="button" class="btn-action btn-delete" onclick="confirmarDelecao(${lancamento.id})">
+                        🗑️ Deletar
+                    </button>
+                </td>
+            `;
+
+                    // Animação de destaque
+                    linha.style.backgroundColor = '#fff3cd';
+                    setTimeout(() => {
+                        linha.style.backgroundColor = '';
+                    }, 2000);
+                }
+            });
+        }
+
+        function removerLinhaTabela(id) {
+            const tbody = document.querySelector('table tbody');
+            if (!tbody) return;
+
+            const linhas = tbody.querySelectorAll('tr');
+            linhas.forEach(linha => {
+                const btnEditar = linha.querySelector('.btn-edit');
+                if (btnEditar && btnEditar.getAttribute('onclick').includes(`(${id},`)) {
+                    linha.style.backgroundColor = '#f8d7da';
+                    setTimeout(() => {
+                        linha.remove();
+
+                        // Se não houver mais linhas, mostrar mensagem
+                        if (tbody.querySelectorAll('tr').length === 0) {
+                            location.reload();
+                        }
+                    }, 500);
+                }
+            });
+        }
     </script>
 </body>
 
